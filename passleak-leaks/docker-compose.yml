@@ -1,0 +1,20 @@
+version: '3'
+services:
+  connector-passleak:
+    image: opencti/connector-passleak:6.1.12
+    environment:
+      - OPENCTI_URL=http://opencti:8080
+      - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+      - CONNECTOR_ID=9288e3aa-3f94-4505-b31b-69585c47081b
+      - CONNECTOR_NAME=Passleak Feed
+      - CONNECTOR_SCOPE=application/json
+      - CONNECTOR_LOG_LEVEL=info
+      - PASSLEAK_BASEURL=https://api.passleak.com/
+      - PASSLEAK_API_KEY=${PASSLEAK_API_KEY}
+      - PASSLEAK_CONTIMEOUT=30
+      - PASSLEAK_READTIMEOUT=60
+      - PASSLEAK_INTERVAL=86400
+      - PASSLEAK_RETRY=5
+    restart: always
+    depends_on:
+      - opencti
