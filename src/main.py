@@ -44,7 +44,7 @@ class PasslekLeaks:
             "baseurl": self.get_config(
                 "baseurl", config, "https://api.passleak.com/"
             ),
-            "apikey": self.get_config("apikey", config, None),
+            "apikey": self.get_config("api_key", config, None),
             "contimeout": int(self.get_config("contimeout", config, 30)),
             "readtimeout": int(self.get_config("readtimeout", config, 60)),
             "retry": int(self.get_config("retry", config, 5)),
