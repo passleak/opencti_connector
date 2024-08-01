@@ -178,6 +178,8 @@ class PasslekLeaks:
                     id=account_id,
                     credential=l_rec['password'],
                     user_id=identity,
+                    created_by_ref=organization.id,
+                    created=l_rec['added'],
                 )
                 stix_bundle.append(user_account)
                 relation = stix2.v21.Relationship(
