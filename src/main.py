@@ -63,7 +63,7 @@ class PasslekLeaks:
         return int(self.interval)
 
     def run(self):
-        self.helper.log_info("Starting Passleak connector")
+        self.helper.log_info("Starting PassLeak connector")
 
         while True:
             try:
@@ -129,7 +129,7 @@ class PasslekLeaks:
         for domain, leaks in leaks_by_domain.items():
             stix_bundle = list()
             organization = stix2.v21.Identity(
-                id=Identity.generate_id("Passleak", "organization"),
+                id=Identity.generate_id("PassLeak", "organization"),
                 name="Passleak",
                 identity_class="organization",
                 description="Passleak Company https://passleak.com",
@@ -178,8 +178,10 @@ class PasslekLeaks:
                     id=account_id,
                     credential=l_rec['password'],
                     user_id=identity,
-                    created_by_ref=organization.id,
-                    created=l_rec['added'],
+                    custom_properties=dict(
+                      x_opencti_description=domain,
+                      x_opencti_author="Passleak",
+                    ),
                 )
                 stix_bundle.append(user_account)
                 relation = stix2.v21.Relationship(
@@ -188,6 +190,12 @@ class PasslekLeaks:
                     relationship_type="related-to"
                 )
                 stix_bundle.append(relation)
+                user_to_domain_relation = stix2.v21.Relationship(
+                    target_ref=domain_identity,
+                    source_ref=user_account,
+                    relationship_type="related-to"
+                )
+                stix_bundle.append(user_to_domain_relation)
             res_bundles.append(stix_bundle)
 
         return res_bundles
