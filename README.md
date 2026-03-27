@@ -1,35 +1,55 @@
 # Passleak Connector for OpenCTI
 
-The **Passleak Connector** integrates Passleak lekas database with OpenCTI. This connector imports found in leaks accounts records.
+The **Passleak Connector** integrates the Passleak leaked credentials database with OpenCTI. It monitors approved domains and imports discovered credential leaks as STIX 2.1 objects.
 
-## Key Features
+## What it imports
 
-This connector perform leaks monitoring requests. It receives records for all added to your account domains. 
+For each approved domain in your Passleak account, the connector fetches monitoring events and creates:
+
+- **Incident** — one per leak source (`source` field), linked to the domain
+- **Malware** — one per stealer family (`stealer_type`: lumma, redline, banshee, etc.), linked to the incident
+- **UserAccount** — one per leaked credential (email or login + password), linked to the incident and domain
+
+Incremental fetching: on each run only new events are loaded (offset-based state per domain).
 
 ## Requirements
-- OpenCTI Platform version 5.10.x or higher.
-- An API Key for accessing Passleak.
 
-## Recommended connectors
-
+- OpenCTI Platform 5.10.x or higher
+- Passleak account with at least one approved domain
+- Passleak API key (`plk_...`)
 
 ## Configuration
 
-Configuration of the connector is straightforward. The minimal configuration requires you just enter the Passleak API key to be provided and OpenCTI connection settings specified. Below is the full list of parameters you can set:
+| Docker envvar          | Mandatory | Default                     | Description                                     |
+|------------------------|-----------|-----------------------------|-------------------------------------------------|
+| `OPENCTI_URL`          | Yes       | —                           | OpenCTI platform URL                            |
+| `OPENCTI_TOKEN`        | Yes       | —                           | OpenCTI admin token                             |
+| `CONNECTOR_ID`         | Yes       | —                           | Unique UUIDv4 for this connector instance       |
+| `CONNECTOR_NAME`       | Yes       | —                           | Display name, e.g. `Passleak Feed`              |
+| `CONNECTOR_SCOPE`      | Yes       | `application/json`          | Connector scope                                 |
+| `CONNECTOR_LOG_LEVEL`  | No        | `info`                      | Log verbosity: `debug`, `info`, `warn`, `error` |
+| `PASSLEAK_API_KEY`     | Yes       | —                           | Passleak API key (`plk_...`)                    |
+| `PASSLEAK_BASEURL`     | No        | `https://api.passleak.com/` | Passleak API base URL                           |
+| `PASSLEAK_INTERVAL`    | No        | `86400`                     | Polling interval in seconds                     |
+| `PASSLEAK_CONTIMEOUT`  | No        | `30`                        | Connection timeout in seconds                   |
+| `PASSLEAK_READTIMEOUT` | No        | `60`                        | Read timeout in seconds                         |
+| `PASSLEAK_RETRY`       | No        | `5`                         | Connection retry attempts                       |
 
-| Parameter                                                           | Docker envvar                   | Mandatory | Description                                                                                                                                                                                    |
-|---------------------------------------------------------------------|---------------------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| OpenCTI URL                                                         | `OPENCTI_URL`                   | Yes       | The URL of the OpenCTI platform.                                                                                                                                                               |
-| OpenCTI Token                                                       | `OPENCTI_TOKEN`                 | Yes       | The default admin token set in the OpenCTI platform.                                                                                                                                           |
-| Connector ID                                                        | `CONNECTOR_ID`                  | Yes       | A unique `UUIDv4` identifier for this connector instance.                                                                                                                                      |
-| Connector Name                                                      | `CONNECTOR_NAME`                | Yes       | Name of the connector. For example: `Passleak`.                                                                                                                                                |
-| Connector Scope                                                     | `CONNECTOR_SCOPE`               | Yes       | The scope or type of data the connector is importing, either a MIME type or Stix Object. E.g. application/json                                                                                 |
-| Log Level                                                           | `CONNECTOR_LOG_LEVEL`           | Yes       | Determines the verbosity of the logs. Options are `debug`, `info`, `warn`, or `error`.                                                                                                         |
-| Run and Terminate                                                   | `CONNECTOR_RUN_AND_TERMINATE`   | Yes       | If set to true, the connector will terminate after a successful run. Useful for debugging or one-time runs.                                                                                    |
-| Update Existing Data                                                | `CONFIG_UPDATE_EXISTING_DATA`   | Yes       | Decide whether the connector should update already existing data in the database.                                                                                                              |
-| Interval                                                            | `CONFIG_INTERVAL`               | Yes       | Determines how often the connector will run, set in hours.                                                                                                                                     |
-| Passleak API Key                                                    | `PASSLEAK_API_KEY`              | Yes       | Your API Key for accessing Passleak API.                                                                                                                                                       |
-| Passleak Base URL                                                   | `PASSLEAK_BASEURL`              | No        | By default, use https://api.passleka.com. In some cases, you may want to use a local API endpoint                                                                                              |
-| Passleak Connection Timeout                                         | `PASSLEAK_CONTIMEOUT`           | No        | Connection timeout to the API. Default (sec): `30`                                                                                                                                             |
-| Passleak Read Timeout                                               | `PASSLEAK_READTIMEOUT`          | No        | Read timeout for each feed. Our API redirects the connector to download data from AWS S3. If the connector is unable to fetch the feed in time, increase the read timeout. Default (sec): `60` |
-| Passleak Fetch Interval                                             | `PASSLEAK_INTERVAL`             | No        | Default (sec): `86400`                                                                                                                                                                         |
+## Quick start
+
+```bash
+cp src/config.yml.sample src/config.yml
+# Edit src/config.yml with your settings, or use environment variables
+
+docker compose up -d
+```
+
+## Running tests
+
+```bash
+cd src
+python3 -m pytest tests/ -v
+
+# Integration test against real API:
+PASSLEAK_API_KEY=plk_... python3 tests/test_integration.py
+```

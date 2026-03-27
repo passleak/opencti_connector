@@ -149,17 +149,16 @@ class PasslekLeaks:
 
             for rec in leaks:
                 source = rec.get("source") or "unknown"
-                event_time = rec.get("event_time")
-                stealer_type = rec.get("stealer_type")
+                event_time = rec.get("event_time") or None
+                stealer_type = rec.get("stealer_type") or None
 
                 # --- Incident (по source) ---
                 incident = incident_by_source.get(source)
                 if incident is None:
-                    created_dt = (
-                        datetime.fromisoformat(event_time)
-                        if event_time
-                        else datetime.utcnow()
-                    )
+                    try:
+                        created_dt = datetime.fromisoformat(event_time) if event_time else datetime.now()
+                    except (ValueError, TypeError):
+                        created_dt = datetime.now()
                     incident_name = (
                         f"Credential leak [{source}] for {domain}"
                         if source != "unknown"
@@ -207,9 +206,9 @@ class PasslekLeaks:
                         )
 
                 # --- UserAccount ---
-                email = rec.get("email", "")
-                login = rec.get("login", "")
-                password = rec.get("password", "")
+                email = rec.get("email") or ""
+                login = rec.get("login") or ""
+                password = rec.get("password") or ""
 
                 identity = email or login
                 if not identity:
